@@ -1,0 +1,77 @@
+def lambda_handler(event, context):
+    # Extract numbers from the event
+    number1 = event.get('number1', 0)
+    number2 = event.get('number2', 0)
+
+    # Check if the inputs are valid numbers
+    if not isinstance(number1, (int, float)) or not isinstance(number2, (int, float)):
+        return {
+            'statusCode': 400,
+            'body': 'Invalid input: Inputs must be numbers.'
+        }
+
+    # Calculate the result
+    result = number1 + number2
+
+    return {
+        'statusCode': 200,
+        'body': {'result': result}
+    }
+
+{
+  "number1": 10,
+  "number2": 15
+}
+import json
+import boto3
+import base64
+
+def lambda_handler(event, context):
+    # Initialize S3 client
+    s3 = boto3.client('s3')
+
+    # Extract bucket name, file name, and file content from the event
+    bucket_name = event.get('bucket_name')
+    file_name = event.get('file_name')
+    file_content = event.get('file_content')  # Expected to be base64-encoded
+
+    if not bucket_name or not file_name or not file_content:
+        return {
+            'statusCode': 400,
+            'body': 'Missing required parameters: bucket_name, file_name, or file_content.'
+        }
+
+    try:
+        # Decode the base64 file content
+        decoded_content = base64.b64decode(file_content)
+
+        # Upload the file to S3
+        s3.put_object(Bucket=bucket_name, Key=file_name, Body=decoded_content)
+
+        return {
+            'statusCode': 200,
+            'body': f'File "{file_name}" successfully uploaded to bucket "{bucket_name}".'
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': f'Error uploading file: {str(e)}'
+        }
+
+{
+  "bucket_name": "your-s3-bucket-name",
+  "file_name": "example.pdf",
+  "file_content": "Base64-encoded-content-here"
+}
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::your-s3-bucket-name/*"
+        }
+    ]
+}
+
